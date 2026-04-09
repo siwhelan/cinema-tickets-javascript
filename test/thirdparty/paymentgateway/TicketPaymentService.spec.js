@@ -1,4 +1,4 @@
-import TicketPaymentService from '../../../src/thirdparty/paymentgateway/TicketPaymentService';
+import TicketPaymentService from '../../../src/thirdparty/paymentgateway/TicketPaymentService.js';
 
 describe('TicketPaymentService', () => {
   let service;

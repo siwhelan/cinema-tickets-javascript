@@ -14,5 +14,14 @@ export default class TicketService {
     if (ticketTypeRequests.length === 0) {
       throw new InvalidPurchaseException('No tickets requested');
     }
+
+    if (this.#getTotalTickets(ticketTypeRequests) > 25) {
+      throw new InvalidPurchaseException('Cannot purchase more than 25 tickets')
+    }
   }
+
+  #getTotalTickets(ticketTypeRequests) {
+    return ticketTypeRequests.reduce((sum, req) => sum + req.getNoOfTickets(), 0);
+  }
+
 }

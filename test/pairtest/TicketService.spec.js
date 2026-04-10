@@ -12,6 +12,9 @@ describe('TicketService', () => {
   });
   describe('purchaseTickets', () => {
     test('should throw InvalidPurchaseException if accountId is not valid', () => {
+      expect(() => service.purchaseTickets(makeRequest('ADULT', 2))).toThrow(
+        InvalidPurchaseException,
+      );
       expect(() => service.purchaseTickets(0, makeRequest('ADULT', 2))).toThrow(
         InvalidPurchaseException,
       );
@@ -24,6 +27,20 @@ describe('TicketService', () => {
       expect(() => service.purchaseTickets(12345)).toThrow(
         InvalidPurchaseException,
       );
+    });
+
+    test('throw InvalidPurchaseException if more than 25 tickets are requested', () => {
+      expect(() =>
+        service.purchaseTickets(12345, makeRequest('ADULT', 26)),
+      ).toThrow(InvalidPurchaseException);
+
+      expect(() =>
+        service.purchaseTickets(
+          12345,
+          makeRequest('ADULT', 13),
+          makeRequest('CHILD', 13),
+        ),
+      ).toThrow(InvalidPurchaseException);
     });
   });
 });

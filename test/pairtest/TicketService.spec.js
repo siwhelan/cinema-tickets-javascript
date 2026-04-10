@@ -50,6 +50,10 @@ describe('TicketService', () => {
       ).toThrow(InvalidPurchaseException);
 
       expect(() =>
+        service.purchaseTickets(12345, makeRequest('INFANT', 2)),
+      ).toThrow(InvalidPurchaseException);
+
+      expect(() =>
         service.purchaseTickets(
           12345,
           makeRequest('CHILD', 2),

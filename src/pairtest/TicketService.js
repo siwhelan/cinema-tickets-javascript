@@ -21,7 +21,7 @@ export default class TicketService {
       );
     }
 
-    if (!this.#getTicketType(ticketTypeRequests)) {
+    if (!this.#validTicketSelection(ticketTypeRequests)) {
       throw new InvalidPurchaseException('Adult ticket must be purchased');
     }
   }
@@ -33,23 +33,12 @@ export default class TicketService {
     );
   }
 
-  #getTicketType(ticketTypeRequests) {
-    const types = [];
-    // iterate through array and call req.getTicketType on each
-    // add each type to an array
-    ticketTypeRequests.forEach((req) => {
-      const type = req.getTicketType();
-      if (!types.includes(type)) {
-        types.push(type);
-      }
-    });
+  #validTicketSelection(ticketTypeRequests) {
+    const types = ticketTypeRequests.map((req) => req.getTicketType());
+    const hasAdult = types.includes('ADULT');
+    const hasChildOrInfant =
+      types.includes('CHILD') || types.includes('INFANT');
 
-    // throw error if any are CHILD or INFANT, and ADULT is not also present
-    if (types.includes('CHILD') || types.includes('INFANT')) {
-      if (!types.includes('ADULT')) {
-        return false;
-      }
-    }
-    return true;
+    return hasAdult || !hasChildOrInfant;
   }
 }

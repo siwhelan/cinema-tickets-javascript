@@ -24,15 +24,26 @@ describe('TicketService', () => {
 
   describe('purchaseTickets', () => {
     test('should throw InvalidPurchaseException if accountId is not valid', () => {
-      expect(() => service.purchaseTickets(makeRequest('ADULT', 2))).toThrow(
-        InvalidPurchaseException,
-      );
+      expect(() =>
+        service.purchaseTickets(null, makeRequest('ADULT', 2)),
+      ).toThrow(InvalidPurchaseException);
       expect(() => service.purchaseTickets(0, makeRequest('ADULT', 2))).toThrow(
         InvalidPurchaseException,
       );
       expect(() =>
         service.purchaseTickets(-1, makeRequest('ADULT', 2)),
       ).toThrow(InvalidPurchaseException);
+    });
+
+    test('should throw InvalidPurchaseException if the ticketTypeRequest is not an instance of TicketTypeRequest ', () => {
+      const fakeRequest = {
+        getTicketType: () => 'ADULT',
+        getNoOfTickets: () => 1,
+      };
+
+      expect(() => service.purchaseTickets(accountId, fakeRequest)).toThrow(
+        InvalidPurchaseException,
+      );
     });
 
     test('should throw InvalidPurchaseException if no tickets are requested', () => {
@@ -77,12 +88,12 @@ describe('TicketService', () => {
     });
 
     test('should call TicketPaymentService with the correct total cost', () => {
-      const expectedCost = TICKET_PRICES.ADULT * 2 + TICKET_PRICES.CHILD * 1;
+      const expectedCost = TICKET_PRICES.ADULT * 2 + TICKET_PRICES.CHILD * 2;
 
       service.purchaseTickets(
         accountId,
         makeRequest('ADULT', 2),
-        makeRequest('CHILD', 1),
+        makeRequest('CHILD', 2),
       );
       expect(TicketPaymentService.prototype.makePayment).toHaveBeenCalledWith(
         accountId,
@@ -95,10 +106,11 @@ describe('TicketService', () => {
         accountId,
         makeRequest('ADULT', 2),
         makeRequest('CHILD', 1),
+        makeRequest('INFANT', 1),
       );
       expect(SeatReservationService.prototype.reserveSeat).toHaveBeenCalledWith(
         accountId,
-        3,
+        3, // infants don't require seats
       );
     });
   });

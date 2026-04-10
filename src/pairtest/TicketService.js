@@ -50,32 +50,70 @@ export default class TicketService {
   }
 
   #validate(accountId, ticketTypeRequests) {
-    if (!Number.isInteger(accountId) || accountId <= 0) {
-      throw new InvalidPurchaseException('Invalid Account ID');
-    }
-
-    if (ticketTypeRequests.length === 0) {
-      throw new InvalidPurchaseException('No tickets requested');
-    }
-
-    if (ticketTypeRequests.some((req) => !(req instanceof TicketTypeRequest))) {
-      throw new InvalidPurchaseException('Invalid ticket request');
-    }
-
     const totalTickets = this.#getTotalNoOfTickets(ticketTypeRequests);
 
-    if (totalTickets > MAX_TICKETS) {
-      throw new InvalidPurchaseException(
-        `Cannot purchase more than ${MAX_TICKETS} tickets`,
-      );
-    }
+    const rules = [
+      {
+        check: () => !Number.isInteger(accountId) || accountId <= 0,
+        message: 'Invalid Account ID',
+      },
+      {
+        check: () => ticketTypeRequests.length === 0,
+        message: 'No tickets requested',
+      },
+      {
+        check: () =>
+          ticketTypeRequests.some((req) => !(req instanceof TicketTypeRequest)),
+        message: 'Invalid ticket request',
+      },
+      {
+        check: () => totalTickets > MAX_TICKETS,
+        message: `Cannot purchase more than ${MAX_TICKETS} tickets`,
+      },
+      {
+        check: () => totalTickets === 0,
+        message: 'No tickets requested',
+      },
+      {
+        check: () => !this.#validTicketSelection(ticketTypeRequests),
+        message: 'Adult ticket must be purchased',
+      },
+    ];
 
-    if (totalTickets === 0) {
-      throw new InvalidPurchaseException('No tickets requested');
-    }
-
-    if (!this.#validTicketSelection(ticketTypeRequests)) {
-      throw new InvalidPurchaseException('Adult ticket must be purchased');
+    for (const rule of rules) {
+      if (rule.check()) {
+        throw new InvalidPurchaseException(rule.message);
+      }
     }
   }
 }
+
+// #validate(accountId, ticketTypeRequests) {
+//     if (!Number.isInteger(accountId) || accountId <= 0) {
+//       throw new InvalidPurchaseException('Invalid Account ID');
+//     }
+
+//     if (ticketTypeRequests.length === 0) {
+//       throw new InvalidPurchaseException('No tickets requested');
+//     }
+
+//     if (ticketTypeRequests.some((req) => !(req instanceof TicketTypeRequest))) {
+//       throw new InvalidPurchaseException('Invalid ticket request');
+//     }
+
+//     const totalTickets = this.#getTotalNoOfTickets(ticketTypeRequests);
+
+//     if (totalTickets > MAX_TICKETS) {
+//       throw new InvalidPurchaseException(
+//         `Cannot purchase more than ${MAX_TICKETS} tickets`,
+//       );
+//     }
+
+//     if (totalTickets === 0) {
+//       throw new InvalidPurchaseException('No tickets requested');
+//     }
+
+//     if (!this.#validTicketSelection(ticketTypeRequests)) {
+//       throw new InvalidPurchaseException('Adult ticket must be purchased');
+//     }
+//   }

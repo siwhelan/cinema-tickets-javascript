@@ -1,20 +1,7 @@
 import TicketPaymentService from '../thirdparty/paymentgateway/TicketPaymentService.js';
 import SeatReservationService from '../thirdparty/seatbooking/SeatReservationService.js';
+import { MAX_TICKETS, TICKET_PRICES, TICKET_TYPES } from './config.js';
 import InvalidPurchaseException from './lib/InvalidPurchaseException.js';
-
-const TICKET_TYPES = Object.freeze({
-  ADULT: 'ADULT',
-  CHILD: 'CHILD',
-  INFANT: 'INFANT',
-});
-
-const TICKET_PRICES = Object.freeze({
-  ADULT: 25,
-  CHILD: 15,
-  INFANT: 0,
-});
-
-const MAX_TICKETS = 25;
 
 export default class TicketService {
   /**

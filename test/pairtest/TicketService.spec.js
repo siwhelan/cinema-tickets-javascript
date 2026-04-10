@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 vi.mock('../../src/thirdparty/paymentgateway/TicketPaymentService.js');
 vi.mock('../../src/thirdparty/seatbooking/SeatReservationService.js');
 
+import { MAX_TICKETS } from '../../src/pairtest/config.js';
+
 import InvalidPurchaseException from '../../src/pairtest/lib/InvalidPurchaseException.js';
 import TicketTypeRequest from '../../src/pairtest/lib/TicketTypeRequest.js';
 import TicketService from '../../src/pairtest/TicketService.js';
@@ -13,10 +15,14 @@ const makeRequest = (type, count) => new TicketTypeRequest(type, count);
 
 describe('TicketService', () => {
   let service;
+  let accountId;
+
   beforeEach(() => {
     vi.clearAllMocks();
     service = new TicketService();
+    accountId = 12345;
   });
+
   describe('purchaseTickets', () => {
     test('should throw InvalidPurchaseException if accountId is not valid', () => {
       expect(() => service.purchaseTickets(makeRequest('ADULT', 2))).toThrow(
@@ -31,38 +37,42 @@ describe('TicketService', () => {
     });
 
     test('should throw InvalidPurchaseException if no tickets are requested', () => {
-      expect(() => service.purchaseTickets(12345)).toThrow(
+      expect(() => service.purchaseTickets(accountId)).toThrow(
         InvalidPurchaseException,
       );
     });
 
-    test('should throw InvalidPurchaseException if more than 25 tickets are requested', () => {
-      expect(() =>
-        service.purchaseTickets(12345, makeRequest('ADULT', 26)),
-      ).toThrow(InvalidPurchaseException);
-
+    test(`should throw InvalidPurchaseException if more than ${MAX_TICKETS} tickets are requested`, () => {
       expect(() =>
         service.purchaseTickets(
-          12345,
-          makeRequest('ADULT', 12),
-          makeRequest('CHILD', 13),
-          makeRequest('INFANT', 1),
+          accountId,
+          makeRequest('ADULT', MAX_TICKETS + 1),
         ),
+      ).toThrow(InvalidPurchaseException);
+
+      expect(
+        () =>
+          service.purchaseTickets(
+            accountId,
+            makeRequest('ADULT', 12),
+            makeRequest('CHILD', 13),
+            makeRequest('INFANT', 1),
+          ), // 12 + 13 + 1 = 26, one over the current limit of 25
       ).toThrow(InvalidPurchaseException);
     });
 
     test('should thrown InvalidPurchaseException if a child or infant ticket is purchased without an adult', () => {
       expect(() =>
-        service.purchaseTickets(12345, makeRequest('CHILD', 2)),
+        service.purchaseTickets(accountId, makeRequest('CHILD', 2)),
       ).toThrow(InvalidPurchaseException);
 
       expect(() =>
-        service.purchaseTickets(12345, makeRequest('INFANT', 2)),
+        service.purchaseTickets(accountId, makeRequest('INFANT', 2)),
       ).toThrow(InvalidPurchaseException);
 
       expect(() =>
         service.purchaseTickets(
-          12345,
+          accountId,
           makeRequest('CHILD', 2),
           makeRequest('ADULT', 1),
         ),
@@ -71,24 +81,24 @@ describe('TicketService', () => {
 
     test('should call TicketPaymentService with the correct total cost', () => {
       service.purchaseTickets(
-        12345,
+        accountId,
         makeRequest('ADULT', 2), // 50
         makeRequest('CHILD', 1), // 15
       );
       expect(TicketPaymentService.prototype.makePayment).toHaveBeenCalledWith(
-        12345,
+        accountId,
         65,
       );
     });
 
     test('should call SeatReservationService with the correct number of seats', () => {
       service.purchaseTickets(
-        12345,
+        accountId,
         makeRequest('ADULT', 2),
         makeRequest('CHILD', 1),
       );
       expect(SeatReservationService.prototype.reserveSeat).toHaveBeenCalledWith(
-        12345,
+        accountId,
         3,
       );
     });

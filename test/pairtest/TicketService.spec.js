@@ -61,7 +61,7 @@ describe('TicketService', () => {
       ).toThrow(InvalidPurchaseException);
     });
 
-    test('should thrown InvalidPurchaseException if a child or infant ticket is purchased without an adult', () => {
+    test('should throw InvalidPurchaseException if a child or infant ticket is purchased without an adult', () => {
       expect(() =>
         service.purchaseTickets(accountId, makeRequest('CHILD', 2)),
       ).toThrow(InvalidPurchaseException);

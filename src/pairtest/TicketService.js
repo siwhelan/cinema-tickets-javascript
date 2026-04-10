@@ -2,12 +2,12 @@ import TicketPaymentService from '../thirdparty/paymentgateway/TicketPaymentServ
 import SeatReservationService from '../thirdparty/seatbooking/SeatReservationService.js';
 import { MAX_TICKETS, TICKET_PRICES, TICKET_TYPES } from './config.js';
 import InvalidPurchaseException from './lib/InvalidPurchaseException.js';
+import TicketTypeRequest from './lib/TicketTypeRequest.js';
 
 export default class TicketService {
   /**
    * Should only have private methods other than the one below.
    */
-
   purchaseTickets(accountId, ...ticketTypeRequests) {
     this.#validate(accountId, ticketTypeRequests);
 
@@ -34,15 +34,12 @@ export default class TicketService {
     return hasAdult || !hasChildOrInfant;
   }
 
-  // TODO Refactor this
   #calculateTotalCost(ticketTypeRequests) {
-    // start a counter
-    let total = 0;
-    // loop through ticketTypeRequests and multiply type price by no of tickets
-    for (const req of ticketTypeRequests) {
-      total += TICKET_PRICES[req.getTicketType()] * req.getNoOfTickets();
-    }
-    return total;
+    return ticketTypeRequests.reduce(
+      (sum, req) =>
+        sum + TICKET_PRICES[req.getTicketType()] * req.getNoOfTickets(),
+      0,
+    );
   }
 
   #calculateNoOfSeats(ticketTypeRequests) {
@@ -61,10 +58,20 @@ export default class TicketService {
       throw new InvalidPurchaseException('No tickets requested');
     }
 
-    if (this.#getTotalNoOfTickets(ticketTypeRequests) > MAX_TICKETS) {
+    if (ticketTypeRequests.some((req) => !(req instanceof TicketTypeRequest))) {
+      throw new InvalidPurchaseException('Invalid ticket request');
+    }
+
+    const totalTickets = this.#getTotalNoOfTickets(ticketTypeRequests);
+
+    if (totalTickets > MAX_TICKETS) {
       throw new InvalidPurchaseException(
         `Cannot purchase more than ${MAX_TICKETS} tickets`,
       );
+    }
+
+    if (totalTickets === 0) {
+      throw new InvalidPurchaseException('No tickets requested');
     }
 
     if (!this.#validTicketSelection(ticketTypeRequests)) {

@@ -80,5 +80,17 @@ describe('TicketService', () => {
         65,
       );
     });
+
+    test('should call SeatReservationService with the correct number of seats', () => {
+      service.purchaseTickets(
+        12345,
+        makeRequest('ADULT', 2),
+        makeRequest('CHILD', 1),
+      );
+      expect(SeatReservationService.prototype.reserveSeat).toHaveBeenCalledWith(
+        12345,
+        3,
+      );
+    });
   });
 });

@@ -1,19 +1,20 @@
 import TicketPaymentService from '../thirdparty/paymentgateway/TicketPaymentService.js';
+import SeatReservationService from '../thirdparty/seatbooking/SeatReservationService.js';
 import InvalidPurchaseException from './lib/InvalidPurchaseException.js';
-import TicketTypeRequest from './lib/TicketTypeRequest.js';
 
-/**
- * @typedef {'ADULT' | 'CHILD' | 'INFANT'} TicketType
- */
+const TICKET_TYPES = Object.freeze({
+  ADULT: 'ADULT',
+  CHILD: 'CHILD',
+  INFANT: 'INFANT',
+});
 
-/**
- * @type {Record<TicketType, number>}
- */
 const TICKET_PRICES = Object.freeze({
   ADULT: 25,
   CHILD: 15,
   INFANT: 0,
 });
+
+const MAX_TICKETS = 25;
 
 export default class TicketService {
   /**
@@ -21,29 +22,16 @@ export default class TicketService {
    */
 
   purchaseTickets(accountId, ...ticketTypeRequests) {
-    if (!Number.isInteger(accountId) || accountId <= 0) {
-      throw new InvalidPurchaseException('Invalid Account ID');
-    }
-
-    if (ticketTypeRequests.length === 0) {
-      throw new InvalidPurchaseException('No tickets requested');
-    }
-
-    if (this.#getTotalTickets(ticketTypeRequests) > 25) {
-      throw new InvalidPurchaseException(
-        'Cannot purchase more than 25 tickets',
-      );
-    }
-
-    if (!this.#validTicketSelection(ticketTypeRequests)) {
-      throw new InvalidPurchaseException('Adult ticket must be purchased');
-    }
+    this.#validate(accountId, ticketTypeRequests);
 
     const totalCost = this.#calculateTotalCost(ticketTypeRequests);
     new TicketPaymentService().makePayment(accountId, totalCost);
+
+    const totalSeats = this.#calculateNoOfSeats(ticketTypeRequests);
+    new SeatReservationService().reserveSeat(accountId, totalSeats);
   }
 
-  #getTotalTickets(ticketTypeRequests) {
+  #getTotalNoOfTickets(ticketTypeRequests) {
     return ticketTypeRequests.reduce(
       (sum, req) => sum + req.getNoOfTickets(),
       0,
@@ -52,22 +40,48 @@ export default class TicketService {
 
   #validTicketSelection(ticketTypeRequests) {
     const types = ticketTypeRequests.map((req) => req.getTicketType());
-    const hasAdult = types.includes('ADULT');
+    const hasAdult = types.includes(TICKET_TYPES.ADULT);
     const hasChildOrInfant =
-      types.includes('CHILD') || types.includes('INFANT');
+      types.includes(TICKET_TYPES.CHILD) || types.includes(TICKET_TYPES.INFANT);
 
     return hasAdult || !hasChildOrInfant;
   }
 
+  // TODO Refactor this
   #calculateTotalCost(ticketTypeRequests) {
-    // Adults £25, Children £15, Infants £0
     // start a counter
     let total = 0;
-
     // loop through ticketTypeRequests and multiply type price by no of tickets
     for (const req of ticketTypeRequests) {
       total += TICKET_PRICES[req.getTicketType()] * req.getNoOfTickets();
     }
     return total;
+  }
+
+  #calculateNoOfSeats(ticketTypeRequests) {
+    // Type INFANT = no seat
+    return ticketTypeRequests
+      .filter((req) => req.getTicketType() !== TICKET_TYPES.INFANT)
+      .reduce((sum, req) => sum + req.getNoOfTickets(), 0);
+  }
+
+  #validate(accountId, ticketTypeRequests) {
+    if (!Number.isInteger(accountId) || accountId <= 0) {
+      throw new InvalidPurchaseException('Invalid Account ID');
+    }
+
+    if (ticketTypeRequests.length === 0) {
+      throw new InvalidPurchaseException('No tickets requested');
+    }
+
+    if (this.#getTotalNoOfTickets(ticketTypeRequests) > MAX_TICKETS) {
+      throw new InvalidPurchaseException(
+        `Cannot purchase more than ${MAX_TICKETS} tickets`,
+      );
+    }
+
+    if (!this.#validTicketSelection(ticketTypeRequests)) {
+      throw new InvalidPurchaseException('Adult ticket must be purchased');
+    }
   }
 }

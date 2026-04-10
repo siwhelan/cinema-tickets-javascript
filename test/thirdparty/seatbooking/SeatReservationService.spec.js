@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, test } from 'vitest';
 import SeatReservationService from '../../../src/thirdparty/seatbooking/SeatReservationService.js';
 
 describe('SeatReservationService', () => {

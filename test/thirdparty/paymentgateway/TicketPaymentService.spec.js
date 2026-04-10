@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, test } from 'vitest';
 import TicketPaymentService from '../../../src/thirdparty/paymentgateway/TicketPaymentService.js';
 
 describe('TicketPaymentService', () => {

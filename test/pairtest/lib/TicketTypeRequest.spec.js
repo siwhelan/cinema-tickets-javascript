@@ -1,3 +1,4 @@
+import { describe, expect, test } from 'vitest';
 import TicketTypeRequest from '../../../src/pairtest/lib/TicketTypeRequest.js';
 
 describe('TicketTypeRequest', () => {

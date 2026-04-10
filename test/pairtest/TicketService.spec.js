@@ -29,7 +29,7 @@ describe('TicketService', () => {
       );
     });
 
-    test('throw InvalidPurchaseException if more than 25 tickets are requested', () => {
+    test('should throw InvalidPurchaseException if more than 25 tickets are requested', () => {
       expect(() =>
         service.purchaseTickets(12345, makeRequest('ADULT', 26)),
       ).toThrow(InvalidPurchaseException);
@@ -37,10 +37,25 @@ describe('TicketService', () => {
       expect(() =>
         service.purchaseTickets(
           12345,
-          makeRequest('ADULT', 13),
+          makeRequest('ADULT', 12),
           makeRequest('CHILD', 13),
+          makeRequest('INFANT', 1),
         ),
       ).toThrow(InvalidPurchaseException);
+    });
+
+    test('should thrown InvalidPurchaseException if a child or infant ticket is purchased without an adult', () => {
+      expect(() =>
+        service.purchaseTickets(12345, makeRequest('CHILD', 2)),
+      ).toThrow(InvalidPurchaseException);
+
+      expect(() =>
+        service.purchaseTickets(
+          12345,
+          makeRequest('CHILD', 2),
+          makeRequest('ADULT', 1),
+        ),
+      ).not.toThrow();
     });
   });
 });

@@ -16,12 +16,40 @@ export default class TicketService {
     }
 
     if (this.#getTotalTickets(ticketTypeRequests) > 25) {
-      throw new InvalidPurchaseException('Cannot purchase more than 25 tickets')
+      throw new InvalidPurchaseException(
+        'Cannot purchase more than 25 tickets',
+      );
+    }
+
+    if (!this.#getTicketType(ticketTypeRequests)) {
+      throw new InvalidPurchaseException('Adult ticket must be purchased');
     }
   }
 
   #getTotalTickets(ticketTypeRequests) {
-    return ticketTypeRequests.reduce((sum, req) => sum + req.getNoOfTickets(), 0);
+    return ticketTypeRequests.reduce(
+      (sum, req) => sum + req.getNoOfTickets(),
+      0,
+    );
   }
 
+  #getTicketType(ticketTypeRequests) {
+    const types = [];
+    // iterate through array and call req.getTicketType on each
+    // add each type to an array
+    ticketTypeRequests.forEach((req) => {
+      const type = req.getTicketType();
+      if (!types.includes(type)) {
+        types.push(type);
+      }
+    });
+
+    // throw error if any are CHILD or INFANT, and ADULT is not also present
+    if (types.includes('CHILD') || types.includes('INFANT')) {
+      if (!types.includes('ADULT')) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

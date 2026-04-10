@@ -1,13 +1,20 @@
-import { beforeEach, describe, expect, test } from 'vitest';
-import InvalidPurchaseException from '../../src/pairtest/lib/InvalidPurchaseException';
-import TicketTypeRequest from '../../src/pairtest/lib/TicketTypeRequest';
-import TicketService from '../../src/pairtest/TicketService';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+vi.mock('../../src/thirdparty/paymentgateway/TicketPaymentService.js');
+vi.mock('../../src/thirdparty/seatbooking/SeatReservationService.js');
+
+import InvalidPurchaseException from '../../src/pairtest/lib/InvalidPurchaseException.js';
+import TicketTypeRequest from '../../src/pairtest/lib/TicketTypeRequest.js';
+import TicketService from '../../src/pairtest/TicketService.js';
+import TicketPaymentService from '../../src/thirdparty/paymentgateway/TicketPaymentService.js';
+import SeatReservationService from '../../src/thirdparty/seatbooking/SeatReservationService.js';
 
 const makeRequest = (type, count) => new TicketTypeRequest(type, count);
 
 describe('TicketService', () => {
   let service;
   beforeEach(() => {
+    vi.clearAllMocks();
     service = new TicketService();
   });
   describe('purchaseTickets', () => {
@@ -60,6 +67,18 @@ describe('TicketService', () => {
           makeRequest('ADULT', 1),
         ),
       ).not.toThrow();
+    });
+
+    test('should call TicketPaymentService with the correct total cost', () => {
+      service.purchaseTickets(
+        12345,
+        makeRequest('ADULT', 2), // 50
+        makeRequest('CHILD', 1), // 15
+      );
+      expect(TicketPaymentService.prototype.makePayment).toHaveBeenCalledWith(
+        12345,
+        65,
+      );
     });
   });
 });

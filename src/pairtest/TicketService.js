@@ -1,5 +1,19 @@
+import TicketPaymentService from '../thirdparty/paymentgateway/TicketPaymentService.js';
 import InvalidPurchaseException from './lib/InvalidPurchaseException.js';
 import TicketTypeRequest from './lib/TicketTypeRequest.js';
+
+/**
+ * @typedef {'ADULT' | 'CHILD' | 'INFANT'} TicketType
+ */
+
+/**
+ * @type {Record<TicketType, number>}
+ */
+const TICKET_PRICES = Object.freeze({
+  ADULT: 25,
+  CHILD: 15,
+  INFANT: 0,
+});
 
 export default class TicketService {
   /**
@@ -24,6 +38,9 @@ export default class TicketService {
     if (!this.#validTicketSelection(ticketTypeRequests)) {
       throw new InvalidPurchaseException('Adult ticket must be purchased');
     }
+
+    const totalCost = this.#calculateTotalCost(ticketTypeRequests);
+    new TicketPaymentService().makePayment(accountId, totalCost);
   }
 
   #getTotalTickets(ticketTypeRequests) {
@@ -40,5 +57,17 @@ export default class TicketService {
       types.includes('CHILD') || types.includes('INFANT');
 
     return hasAdult || !hasChildOrInfant;
+  }
+
+  #calculateTotalCost(ticketTypeRequests) {
+    // Adults £25, Children £15, Infants £0
+    // start a counter
+    let total = 0;
+
+    // loop through ticketTypeRequests and multiply type price by no of tickets
+    for (const req of ticketTypeRequests) {
+      total += TICKET_PRICES[req.getTicketType()] * req.getNoOfTickets();
+    }
+    return total;
   }
 }

@@ -31,7 +31,7 @@ export default class TicketService {
     const hasChildOrInfant =
       types.includes(TICKET_TYPES.CHILD) || types.includes(TICKET_TYPES.INFANT);
 
-    return hasAdult || !hasChildOrInfant;
+    return !hasChildOrInfant || hasAdult;
   }
 
   #calculateTotalCost(ticketTypeRequests) {
@@ -58,14 +58,15 @@ export default class TicketService {
         message: 'Invalid Account ID',
       },
       {
-        check: () => ticketTypeRequests.length === 0,
-        message: 'No tickets requested',
-      },
-      {
         check: () =>
           ticketTypeRequests.some((req) => !(req instanceof TicketTypeRequest)),
         message: 'Invalid ticket request',
       },
+      {
+        check: () => ticketTypeRequests.length === 0,
+        message: 'No tickets requested',
+      },
+
       {
         check: () => totalTickets > MAX_TICKETS,
         message: `Cannot purchase more than ${MAX_TICKETS} tickets`,
@@ -87,33 +88,3 @@ export default class TicketService {
     }
   }
 }
-
-// #validate(accountId, ticketTypeRequests) {
-//     if (!Number.isInteger(accountId) || accountId <= 0) {
-//       throw new InvalidPurchaseException('Invalid Account ID');
-//     }
-
-//     if (ticketTypeRequests.length === 0) {
-//       throw new InvalidPurchaseException('No tickets requested');
-//     }
-
-//     if (ticketTypeRequests.some((req) => !(req instanceof TicketTypeRequest))) {
-//       throw new InvalidPurchaseException('Invalid ticket request');
-//     }
-
-//     const totalTickets = this.#getTotalNoOfTickets(ticketTypeRequests);
-
-//     if (totalTickets > MAX_TICKETS) {
-//       throw new InvalidPurchaseException(
-//         `Cannot purchase more than ${MAX_TICKETS} tickets`,
-//       );
-//     }
-
-//     if (totalTickets === 0) {
-//       throw new InvalidPurchaseException('No tickets requested');
-//     }
-
-//     if (!this.#validTicketSelection(ticketTypeRequests)) {
-//       throw new InvalidPurchaseException('Adult ticket must be purchased');
-//     }
-//   }

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 vi.mock('../../src/thirdparty/paymentgateway/TicketPaymentService.js');
 vi.mock('../../src/thirdparty/seatbooking/SeatReservationService.js');
 
-import { MAX_TICKETS } from '../../src/pairtest/config.js';
+import { MAX_TICKETS, TICKET_PRICES } from '../../src/pairtest/config.js';
 
 import InvalidPurchaseException from '../../src/pairtest/lib/InvalidPurchaseException.js';
 import TicketTypeRequest from '../../src/pairtest/lib/TicketTypeRequest.js';
@@ -15,12 +15,11 @@ const makeRequest = (type, count) => new TicketTypeRequest(type, count);
 
 describe('TicketService', () => {
   let service;
-  let accountId;
+  const accountId = 12345;
 
   beforeEach(() => {
     vi.clearAllMocks();
     service = new TicketService();
-    accountId = 12345;
   });
 
   describe('purchaseTickets', () => {
@@ -50,14 +49,12 @@ describe('TicketService', () => {
         ),
       ).toThrow(InvalidPurchaseException);
 
-      expect(
-        () =>
-          service.purchaseTickets(
-            accountId,
-            makeRequest('ADULT', 12),
-            makeRequest('CHILD', 13),
-            makeRequest('INFANT', 1),
-          ), // 12 + 13 + 1 = 26, one over the current limit of 25
+      expect(() =>
+        service.purchaseTickets(
+          accountId,
+          makeRequest('ADULT', MAX_TICKETS),
+          makeRequest('CHILD', 1),
+        ),
       ).toThrow(InvalidPurchaseException);
     });
 
@@ -80,14 +77,16 @@ describe('TicketService', () => {
     });
 
     test('should call TicketPaymentService with the correct total cost', () => {
+      const expectedCost = TICKET_PRICES.ADULT * 2 + TICKET_PRICES.CHILD * 1;
+
       service.purchaseTickets(
         accountId,
-        makeRequest('ADULT', 2), // 50
-        makeRequest('CHILD', 1), // 15
+        makeRequest('ADULT', 2),
+        makeRequest('CHILD', 1),
       );
       expect(TicketPaymentService.prototype.makePayment).toHaveBeenCalledWith(
         accountId,
-        65,
+        expectedCost,
       );
     });
 

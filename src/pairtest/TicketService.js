@@ -1,5 +1,5 @@
-import TicketTypeRequest from './lib/TicketTypeRequest.js';
 import InvalidPurchaseException from './lib/InvalidPurchaseException.js';
+import TicketTypeRequest from './lib/TicketTypeRequest.js';
 
 export default class TicketService {
   /**
@@ -7,6 +7,8 @@ export default class TicketService {
    */
 
   purchaseTickets(accountId, ...ticketTypeRequests) {
-    // throws InvalidPurchaseException
+    if (!Number.isInteger(accountId) || accountId <= 0) {
+      throw new InvalidPurchaseException('Invalid Account ID');
+    }
   }
 }

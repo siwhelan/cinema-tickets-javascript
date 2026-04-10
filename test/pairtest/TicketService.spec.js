@@ -19,5 +19,11 @@ describe('TicketService', () => {
         service.purchaseTickets(-1, makeRequest('ADULT', 2)),
       ).toThrow(InvalidPurchaseException);
     });
+
+    test('should throw InvalidPurchaseException if no tickets are requested', () => {
+      expect(() => service.purchaseTickets(12345)).toThrow(
+        InvalidPurchaseException,
+      );
+    });
   });
 });

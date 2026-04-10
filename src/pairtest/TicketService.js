@@ -10,5 +10,9 @@ export default class TicketService {
     if (!Number.isInteger(accountId) || accountId <= 0) {
       throw new InvalidPurchaseException('Invalid Account ID');
     }
+
+    if (ticketTypeRequests.length === 0) {
+      throw new InvalidPurchaseException('No tickets requested');
+    }
   }
 }

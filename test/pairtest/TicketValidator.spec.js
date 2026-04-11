@@ -49,6 +49,28 @@ describe('TicketValidator', () => {
     ).toThrow(InvalidPurchaseException);
   });
 
+  test('should throw InvalidPurchaseException if a negative number of tickets is requested', () => {
+    expect(() =>
+      validator.validate(accountId, makeRequest('ADULT', -1)),
+    ).toThrow(InvalidPurchaseException);
+
+    expect(() =>
+      validator.validate(
+        accountId,
+        makeRequest('ADULT', 2),
+        makeRequest('CHILD', -1),
+      ),
+    ).toThrow(InvalidPurchaseException);
+
+    expect(() =>
+      validator.validate(
+        accountId,
+        makeRequest('ADULT', 2),
+        makeRequest('INFANT', -1),
+      ),
+    ).toThrow(InvalidPurchaseException);
+  });
+
   test(`should throw InvalidPurchaseException if more than ${MAX_TICKETS} tickets are requested`, () => {
     expect(() =>
       validator.validate(accountId, makeRequest('ADULT', MAX_TICKETS + 1)),

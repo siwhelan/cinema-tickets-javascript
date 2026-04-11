@@ -24,7 +24,8 @@ export default class TicketValidator {
         message: `Cannot purchase more than ${MAX_TICKETS} tickets`,
       },
       {
-        check: () => this.#getTotalNoOfTickets(ticketTypeRequests) === 0,
+        check: () =>
+          ticketTypeRequests.some((req) => req.getNoOfTickets() <= 0),
         message: 'Ticket quantities must be greater than zero',
       },
       {

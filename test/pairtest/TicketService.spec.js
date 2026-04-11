@@ -116,6 +116,21 @@ describe('TicketService', () => {
       );
     });
 
+    test('should allow two separate requests for the same type with the correct total cost', () => {
+      const expectedCost = TICKET_PRICES.ADULT * 4;
+
+      service.purchaseTickets(
+        accountId,
+        makeRequest('ADULT', 2),
+        makeRequest('ADULT', 2),
+      );
+
+      expect(mockPayment.makePayment).toHaveBeenCalledWith(
+        accountId,
+        expectedCost,
+      );
+    });
+
     test('should call SeatReservationService with the correct number of seats', () => {
       service.purchaseTickets(
         accountId,

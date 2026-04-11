@@ -1,17 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-
-vi.mock('../../src/thirdparty/paymentgateway/TicketPaymentService.js');
-vi.mock('../../src/thirdparty/seatbooking/SeatReservationService.js');
-
 import { MAX_TICKETS, TICKET_PRICES } from '../../src/pairtest/config.js';
-
 import InvalidPurchaseException from '../../src/pairtest/lib/InvalidPurchaseException.js';
 import TicketTypeRequest from '../../src/pairtest/lib/TicketTypeRequest.js';
 import TicketService from '../../src/pairtest/TicketService.js';
-import TicketPaymentService from '../../src/thirdparty/paymentgateway/TicketPaymentService.js';
-import SeatReservationService from '../../src/thirdparty/seatbooking/SeatReservationService.js';
 
 const makeRequest = (type, count) => new TicketTypeRequest(type, count);
+
+const mockPayment = { makePayment: vi.fn() };
+const mockReservation = { reserveSeat: vi.fn() };
 
 describe('TicketService', () => {
   let service;
@@ -19,7 +15,7 @@ describe('TicketService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new TicketService();
+    service = new TicketService(mockPayment, mockReservation);
   });
 
   describe('purchaseTickets', () => {
@@ -95,7 +91,7 @@ describe('TicketService', () => {
         makeRequest('ADULT', 2),
         makeRequest('CHILD', 2),
       );
-      expect(TicketPaymentService.prototype.makePayment).toHaveBeenCalledWith(
+      expect(mockPayment.makePayment).toHaveBeenCalledWith(
         accountId,
         expectedCost,
       );
@@ -108,7 +104,7 @@ describe('TicketService', () => {
         makeRequest('CHILD', 1),
         makeRequest('INFANT', 1),
       );
-      expect(SeatReservationService.prototype.reserveSeat).toHaveBeenCalledWith(
+      expect(mockReservation.reserveSeat).toHaveBeenCalledWith(
         accountId,
         3, // infants don't require seats
       );

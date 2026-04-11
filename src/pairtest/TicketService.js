@@ -5,6 +5,17 @@ import InvalidPurchaseException from './lib/InvalidPurchaseException.js';
 import TicketTypeRequest from './lib/TicketTypeRequest.js';
 
 export default class TicketService {
+  #paymentService;
+  #reservationService;
+
+  constructor(
+    paymentService = new TicketPaymentService(),
+    reservationService = new SeatReservationService(),
+  ) {
+    this.#paymentService = paymentService;
+    this.#reservationService = reservationService;
+  }
+
   /**
    * Should only have private methods other than the one below.
    */
@@ -12,10 +23,10 @@ export default class TicketService {
     this.#validate(accountId, ticketTypeRequests);
 
     const totalCost = this.#calculateTotalCost(ticketTypeRequests);
-    new TicketPaymentService().makePayment(accountId, totalCost);
+    this.#paymentService.makePayment(accountId, totalCost);
 
     const totalSeats = this.#calculateNoOfSeats(ticketTypeRequests);
-    new SeatReservationService().reserveSeat(accountId, totalSeats);
+    this.#reservationService.reserveSeat(accountId, totalSeats);
   }
 
   #getTotalNoOfTickets(ticketTypeRequests) {
@@ -25,7 +36,7 @@ export default class TicketService {
     );
   }
 
-  #validTicketSelection(ticketTypeRequests) {
+  #adultRequirementMet(ticketTypeRequests) {
     const types = ticketTypeRequests.map((req) => req.getTicketType());
     const hasAdult = types.includes(TICKET_TYPES.ADULT);
     const hasChildOrInfant =
@@ -73,10 +84,10 @@ export default class TicketService {
       },
       {
         check: () => totalTickets === 0,
-        message: 'No tickets requested',
+        message: 'Zero tickets requested',
       },
       {
-        check: () => !this.#validTicketSelection(ticketTypeRequests),
+        check: () => !this.#adultRequirementMet(ticketTypeRequests),
         message: 'Adult ticket must be purchased',
       },
     ];

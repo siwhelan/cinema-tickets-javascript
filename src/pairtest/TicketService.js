@@ -38,11 +38,15 @@ export default class TicketService {
 
   #adultRequirementMet(ticketTypeRequests) {
     const types = ticketTypeRequests.map((req) => req.getTicketType());
-    const hasAdult = types.includes(TICKET_TYPES.ADULT);
+
+    const adultCount = ticketTypeRequests
+      .filter((req) => req.getTicketType() === TICKET_TYPES.ADULT)
+      .reduce((sum, req) => sum + req.getNoOfTickets(), 0);
+
     const hasChildOrInfant =
       types.includes(TICKET_TYPES.CHILD) || types.includes(TICKET_TYPES.INFANT);
 
-    return !hasChildOrInfant || hasAdult;
+    return !hasChildOrInfant || adultCount > 0;
   }
 
   #calculateTotalCost(ticketTypeRequests) {
@@ -69,22 +73,21 @@ export default class TicketService {
         message: 'Invalid Account ID',
       },
       {
+        check: () => ticketTypeRequests.length === 0,
+        message: 'No tickets requested',
+      },
+      {
         check: () =>
           ticketTypeRequests.some((req) => !(req instanceof TicketTypeRequest)),
         message: 'Invalid ticket request',
       },
-      {
-        check: () => ticketTypeRequests.length === 0,
-        message: 'No tickets requested',
-      },
-
       {
         check: () => totalTickets > MAX_TICKETS,
         message: `Cannot purchase more than ${MAX_TICKETS} tickets`,
       },
       {
         check: () => totalTickets === 0,
-        message: 'Zero tickets requested',
+        message: 'Ticket quantities must be greater than zero',
       },
       {
         check: () => !this.#adultRequirementMet(ticketTypeRequests),

@@ -26,6 +26,10 @@ describe('TicketValidator', () => {
     expect(() => validator.validate(-1, makeRequest('ADULT', 2))).toThrow(
       InvalidPurchaseException,
     );
+
+    expect(() => validator.validate(null, makeRequest('ADULT', 2))).toThrow(
+      'Invalid Account ID',
+    );
   });
 
   test('should throw InvalidPurchaseException if the ticketTypeRequest is not an instance of TicketTypeRequest ', () => {
@@ -68,7 +72,7 @@ describe('TicketValidator', () => {
         makeRequest('ADULT', 2),
         makeRequest('INFANT', -1),
       ),
-    ).toThrow(InvalidPurchaseException);
+    ).toThrow('Ticket quantities must be greater than zero');
   });
 
   test(`should throw InvalidPurchaseException if more than ${MAX_TICKETS} tickets are requested`, () => {
@@ -82,7 +86,7 @@ describe('TicketValidator', () => {
         makeRequest('ADULT', MAX_TICKETS),
         makeRequest('CHILD', 1),
       ),
-    ).toThrow(InvalidPurchaseException);
+    ).toThrow('Cannot purchase more than 25 tickets');
 
     expect(() =>
       validator.validate(accountId, makeRequest('ADULT', MAX_TICKETS)),
@@ -104,7 +108,7 @@ describe('TicketValidator', () => {
 
     expect(() =>
       validator.validate(accountId, makeRequest('INFANT', 2)),
-    ).toThrow(InvalidPurchaseException);
+    ).toThrow('Adult ticket must be purchased');
 
     expect(() =>
       validator.validate(

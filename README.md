@@ -63,6 +63,10 @@ Business rule constants (`TICKET_PRICES`, `TICKET_TYPES`, `MAX_TICKETS`) are def
 
 Rather than a series of sequential `if` statements, validation is implemented as an array of rule objects, each with a `check` function and an associated error message. The rules are iterated and the first failing check throws an `InvalidPurchaseException`. This approach is declarative, easy to extend, and follows a pattern similar to schema validation libraries such as Zod, without the overhead of additional packages.
 
+### Separation of Concerns
+
+Validation logic is extracted into a dedicated `TicketValidator` class, giving `TicketService` a single responsibility - orchestrating a valid purchase. It does not need to be concerned with request validity. Each class can be tested in isolation, and `TicketValidator` is injected as a dependency consistent with the broader DI pattern. 
+
 ### Private Methods
 
 All methods other than `purchaseTickets` are private (`#`), following the intent of the original stub. This enforces a clear public interface and ensures implementation details are encapsulated within the class.

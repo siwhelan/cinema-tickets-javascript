@@ -1,52 +1,41 @@
 import TicketPaymentService from '../thirdparty/paymentgateway/TicketPaymentService.js';
 import SeatReservationService from '../thirdparty/seatbooking/SeatReservationService.js';
-import { MAX_TICKETS, TICKET_PRICES, TICKET_TYPES } from './config.js';
-import InvalidPurchaseException from './lib/InvalidPurchaseException.js';
-import TicketTypeRequest from './lib/TicketTypeRequest.js';
+import { TICKET_PRICES, TICKET_TYPES } from './config.js';
+import TicketValidator from './TicketValidator.js';
 
+/**
+ * Handles ticket purchasing, delegating payment,
+ * seat reservation and validation to injected dependencies.
+ */
 export default class TicketService {
   #paymentService;
   #reservationService;
+  #validationService;
 
   constructor(
     paymentService = new TicketPaymentService(),
     reservationService = new SeatReservationService(),
+    validationService = new TicketValidator(),
   ) {
     this.#paymentService = paymentService;
     this.#reservationService = reservationService;
+    this.#validationService = validationService;
   }
 
   /**
-   * Should only have private methods other than the one below.
+   * As per the assumptions we know this will never fail.
+   * In practice this would be async/await and wrapped in a try/catch
+   * with appropriate logging and error handling, with the logger
+   * injected as a separate dependency
    */
   purchaseTickets(accountId, ...ticketTypeRequests) {
-    this.#validate(accountId, ticketTypeRequests);
+    this.#validationService.validate(accountId, ...ticketTypeRequests);
 
     const totalCost = this.#calculateTotalCost(ticketTypeRequests);
     this.#paymentService.makePayment(accountId, totalCost);
 
     const totalSeats = this.#calculateNoOfSeats(ticketTypeRequests);
     this.#reservationService.reserveSeat(accountId, totalSeats);
-  }
-
-  #getTotalNoOfTickets(ticketTypeRequests) {
-    return ticketTypeRequests.reduce(
-      (sum, req) => sum + req.getNoOfTickets(),
-      0,
-    );
-  }
-
-  #adultRequirementMet(ticketTypeRequests) {
-    const types = ticketTypeRequests.map((req) => req.getTicketType());
-
-    const adultCount = ticketTypeRequests
-      .filter((req) => req.getTicketType() === TICKET_TYPES.ADULT)
-      .reduce((sum, req) => sum + req.getNoOfTickets(), 0);
-
-    const hasChildOrInfant =
-      types.includes(TICKET_TYPES.CHILD) || types.includes(TICKET_TYPES.INFANT);
-
-    return !hasChildOrInfant || adultCount > 0;
   }
 
   #calculateTotalCost(ticketTypeRequests) {
@@ -58,47 +47,8 @@ export default class TicketService {
   }
 
   #calculateNoOfSeats(ticketTypeRequests) {
-    // Type INFANT = no seat
     return ticketTypeRequests
       .filter((req) => req.getTicketType() !== TICKET_TYPES.INFANT)
       .reduce((sum, req) => sum + req.getNoOfTickets(), 0);
-  }
-
-  #validate(accountId, ticketTypeRequests) {
-    const totalTickets = this.#getTotalNoOfTickets(ticketTypeRequests);
-
-    const rules = [
-      {
-        check: () => !Number.isInteger(accountId) || accountId <= 0,
-        message: 'Invalid Account ID',
-      },
-      {
-        check: () => ticketTypeRequests.length === 0,
-        message: 'No tickets requested',
-      },
-      {
-        check: () =>
-          ticketTypeRequests.some((req) => !(req instanceof TicketTypeRequest)),
-        message: 'Invalid ticket request',
-      },
-      {
-        check: () => totalTickets > MAX_TICKETS,
-        message: `Cannot purchase more than ${MAX_TICKETS} tickets`,
-      },
-      {
-        check: () => totalTickets === 0,
-        message: 'Ticket quantities must be greater than zero',
-      },
-      {
-        check: () => !this.#adultRequirementMet(ticketTypeRequests),
-        message: 'Adult ticket must be purchased',
-      },
-    ];
-
-    for (const rule of rules) {
-      if (rule.check()) {
-        throw new InvalidPurchaseException(rule.message);
-      }
-    }
   }
 }

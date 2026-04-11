@@ -1,7 +1,8 @@
 /**
  * Immutable Object.
+ * Private fields and the absence of setters ensure
+ * values cannot be modified after construction.
  */
-
 export default class TicketTypeRequest {
   #type;
 

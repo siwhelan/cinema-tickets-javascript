@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { MAX_TICKETS, TICKET_PRICES } from '../../src/pairtest/config.js';
+import { TICKET_PRICES } from '../../src/pairtest/config.js';
 import InvalidPurchaseException from '../../src/pairtest/lib/InvalidPurchaseException.js';
 import TicketTypeRequest from '../../src/pairtest/lib/TicketTypeRequest.js';
 import TicketService from '../../src/pairtest/TicketService.js';
@@ -8,6 +8,7 @@ const makeRequest = (type, count) => new TicketTypeRequest(type, count);
 
 const mockPayment = { makePayment: vi.fn() };
 const mockReservation = { reserveSeat: vi.fn() };
+const mockTicketValidator = { validate: vi.fn() };
 
 describe('TicketService', () => {
   let service;
@@ -15,90 +16,22 @@ describe('TicketService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new TicketService(mockPayment, mockReservation);
+    service = new TicketService(
+      mockPayment,
+      mockReservation,
+      mockTicketValidator,
+    );
   });
 
   describe('purchaseTickets', () => {
-    test('should throw InvalidPurchaseException if accountId is not valid', () => {
+    test('should throw if the validator rejects the request', () => {
+      mockTicketValidator.validate.mockImplementationOnce(() => {
+        throw new InvalidPurchaseException('Invalid');
+      });
+
       expect(() =>
-        service.purchaseTickets(null, makeRequest('ADULT', 2)),
+        service.purchaseTickets(accountId, makeRequest('ADULT', 2)),
       ).toThrow(InvalidPurchaseException);
-
-      expect(() => service.purchaseTickets(0, makeRequest('ADULT', 2))).toThrow(
-        InvalidPurchaseException,
-      );
-
-      expect(() =>
-        service.purchaseTickets(-1, makeRequest('ADULT', 2)),
-      ).toThrow(InvalidPurchaseException);
-    });
-
-    test('should throw InvalidPurchaseException if the ticketTypeRequest is not an instance of TicketTypeRequest ', () => {
-      const fakeRequest = {
-        getTicketType: () => 'ADULT',
-        getNoOfTickets: () => 1,
-      };
-
-      expect(() => service.purchaseTickets(accountId, fakeRequest)).toThrow(
-        InvalidPurchaseException,
-      );
-    });
-
-    test('should throw InvalidPurchaseException if no tickets are requested', () => {
-      expect(() => service.purchaseTickets(accountId)).toThrow(
-        InvalidPurchaseException,
-      );
-
-      expect(() =>
-        service.purchaseTickets(accountId, makeRequest('ADULT', 0)),
-      ).toThrow(InvalidPurchaseException);
-    });
-
-    test(`should throw InvalidPurchaseException if more than ${MAX_TICKETS} tickets are requested`, () => {
-      expect(() =>
-        service.purchaseTickets(
-          accountId,
-          makeRequest('ADULT', MAX_TICKETS + 1),
-        ),
-      ).toThrow(InvalidPurchaseException);
-
-      expect(() =>
-        service.purchaseTickets(
-          accountId,
-          makeRequest('ADULT', MAX_TICKETS),
-          makeRequest('CHILD', 1),
-        ),
-      ).toThrow(InvalidPurchaseException);
-
-      expect(() =>
-        service.purchaseTickets(accountId, makeRequest('ADULT', MAX_TICKETS)),
-      ).not.toThrow();
-    });
-
-    test('should throw InvalidPurchaseException if a child or infant ticket is purchased without an adult', () => {
-      expect(() =>
-        service.purchaseTickets(
-          accountId,
-          makeRequest('ADULT', 0),
-          makeRequest('CHILD', 2),
-        ),
-      ).toThrow(InvalidPurchaseException);
-
-      expect(() =>
-        service.purchaseTickets(accountId, makeRequest('CHILD', 2)),
-      ).toThrow(InvalidPurchaseException);
-
-      expect(() =>
-        service.purchaseTickets(accountId, makeRequest('INFANT', 2)),
-      ).toThrow(InvalidPurchaseException);
-
-      expect(() =>
-        service.purchaseTickets(
-          accountId,
-          makeRequest('CHILD', 2),
-          makeRequest('ADULT', 1),
-        ),
-      ).not.toThrow();
     });
 
     test('should call TicketPaymentService with the correct total cost', () => {
@@ -140,7 +73,7 @@ describe('TicketService', () => {
       );
       expect(mockReservation.reserveSeat).toHaveBeenCalledWith(
         accountId,
-        3, // infants don't require seats
+        3, // infants don't require seats. Note there is no rule regarding a limit of 1 infant per adult
       );
     });
 
@@ -159,9 +92,23 @@ describe('TicketService', () => {
         accountId,
         expectedOrderCost,
       );
+      expect(mockTicketValidator.validate).toHaveBeenCalledTimes(1);
       expect(mockReservation.reserveSeat).toHaveBeenCalledWith(accountId, 4); // 5 tickets but 4 seats
       expect(mockPayment.makePayment).toHaveBeenCalledTimes(1);
       expect(mockReservation.reserveSeat).toHaveBeenCalledTimes(1);
+    });
+
+    // End to end - no mocks
+    test('end-to-end: processes a valid purchase without mocks', () => {
+      const realService = new TicketService();
+      expect(() =>
+        realService.purchaseTickets(
+          12345,
+          new TicketTypeRequest('ADULT', 2),
+          new TicketTypeRequest('CHILD', 1),
+          new TicketTypeRequest('INFANT', 1),
+        ),
+      ).not.toThrow();
     });
   });
 });

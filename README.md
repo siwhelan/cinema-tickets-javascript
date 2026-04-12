@@ -12,6 +12,35 @@ A JavaScript implementation of the DWP's "Cinema Tickets" coding exercise.
 npm install
 ```
 
+## Project Structure
+```
+├── src
+│ ├── demo.js
+│ ├── pairtest
+│ │ ├── config.js
+│ │ ├── lib
+│ │ │ ├── InvalidPurchaseException.js
+│ │ │ └── TicketTypeRequest.js
+│ │ ├── TicketService.js
+│ │ └── TicketValidator.js
+│ └── thirdparty
+│ ├── paymentgateway
+│ │ └── TicketPaymentService.js
+│ └── seatbooking
+│ └── SeatReservationService.js
+└── test
+├── pairtest
+│ ├── lib
+│ │ └── TicketTypeRequest.spec.js
+│ ├── TicketService.spec.js
+│ └── TicketValidator.spec.js
+└── thirdparty
+├── paymentgateway
+│ └── TicketPaymentService.spec.js
+└── seatbooking
+└── SeatReservationService.spec.js
+```
+
 ## Usage
 
 ### Run the demo

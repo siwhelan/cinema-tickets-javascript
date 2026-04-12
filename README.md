@@ -17,7 +17,7 @@ npm install
 ### Run the demo
 
 ```bash
-node src/demo.js
+npm run demo
 ```
 The requests in `demo.js` and prices in `config.js` can be adjusted to observe different calculations and validation error messages.
 

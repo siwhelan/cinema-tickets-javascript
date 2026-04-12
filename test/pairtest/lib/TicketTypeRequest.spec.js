@@ -14,12 +14,12 @@ describe('TicketTypeRequest', () => {
     expect(() => new TicketTypeRequest('ADULT', '5')).toThrow(TypeError);
   });
 
-  test('getNoOfTickets returns the correct number of tickets ', () => {
+  test('getNoOfTickets returns the correct number of tickets', () => {
     const request = new TicketTypeRequest('ADULT', 2);
     expect(request.getNoOfTickets()).toBe(2);
   });
 
-  test('getTicketType returns the correct type ', () => {
+  test('getTicketType returns the correct type', () => {
     const request = new TicketTypeRequest('ADULT', 2);
     expect(request.getTicketType()).toBe('ADULT');
   });

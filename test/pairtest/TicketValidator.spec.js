@@ -32,7 +32,7 @@ describe('TicketValidator', () => {
     );
   });
 
-  test('should throw InvalidPurchaseException if the ticketTypeRequest is not an instance of TicketTypeRequest ', () => {
+  test('should throw InvalidPurchaseException if the ticketTypeRequest is not an instance of TicketTypeRequest', () => {
     const fakeRequest = {
       getTicketType: () => 'ADULT',
       getNoOfTickets: () => 1,

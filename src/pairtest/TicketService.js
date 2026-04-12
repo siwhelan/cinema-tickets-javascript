@@ -26,7 +26,8 @@ export default class TicketService {
    * As per the assumptions we know this will never fail.
    * In practice this would be async/await and wrapped in a try/catch
    * with appropriate logging and error handling, with the logger
-   * injected as a separate dependency
+   * injected as a separate dependency. It would also return a success response
+   * and/or order summary.
    */
   purchaseTickets(accountId, ...ticketTypeRequests) {
     this.#validationService.validate(accountId, ...ticketTypeRequests);
